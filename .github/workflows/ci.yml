@@ -12,34 +12,75 @@ concurrency:
 jobs:
   build-test:
     runs-on: macos-15
+    env:
+      XCODE_APP: /Applications/Xcode_26.3.app
+      PROJECT: Booknaru.xcodeproj
+      SCHEME: Booknaru
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
         run: |
-          sudo xcode-select -s /Applications/Xcode_26.3.app
+          sudo xcode-select -s "$XCODE_APP"
           xcodebuild -version
           swift --version
+
+      - name: Resolve simulator
+        run: |
+          set -euo pipefail
+
+          echo "::group::runtimes"
+          xcrun simctl list runtimes
+          echo "::endgroup::"
+
+          RUNTIME=$(xcrun simctl list runtimes --json \
+            | jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)]
+                     | sort_by(.version) | last | .identifier // empty')
+
+          if [ -z "$RUNTIME" ]; then
+            echo "::error::사용 가능한 iOS 시뮬레이터 런타임이 없습니다. XCODE_APP 버전을 조정하세요."
+            exit 1
+          fi
+          echo "runtime: $RUNTIME"
+
+          UDID=$(xcrun simctl list devices available --json \
+            | jq -r --arg rt "$RUNTIME" \
+              '[.devices[$rt][]? | select(.name | startswith("iPhone"))]
+               | first | .udid // empty')
+
+          if [ -z "$UDID" ]; then
+            echo "런타임은 있으나 iPhone 기기가 없어 생성합니다."
+            DEVICE=$(xcrun simctl list devicetypes --json \
+              | jq -r '[.devicetypes[] | select(.identifier | contains("iPhone"))]
+                       | last | .identifier')
+            UDID=$(xcrun simctl create "CI-iPhone" "$DEVICE" "$RUNTIME")
+          fi
+
+          echo "SIMULATOR_UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl list devices | grep "$UDID"
+
       - uses: jdx/mise-action@v2
 
       - name: Generate project
         run: |
           tuist install
           tuist generate --no-open
-          ls
 
       - name: Test
         run: |
           set -o pipefail
           xcodebuild test \
-            -project Booknaru.xcodeproj \
-            -scheme Booknaru \
-            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -destination "id=$SIMULATOR_UDID" \
             -resultBundlePath TestResults \
             CODE_SIGNING_ALLOWED=NO
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload results
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: TestResults
           path: TestResults.xcresult
+          if-no-files-found: ignore
