@@ -119,3 +119,8 @@ _측정 예정_
 - `Feature`에서는 컴파일 에러, `Data`에서는 통과 — 이 비대칭이 설정이 걸렸다는 증거
 - PR마다 GitHub Actions에서 빌드·테스트 자동 실행
 - `main` 브랜치는 CI 통과를 머지 조건으로 강제
+
+## 문서
+
+- [설계 결정 기록](docs/DECISIONS.md) — 무엇을 왜 선택했고 무엇을 버렸는가
+- [트러블슈팅](docs/TROUBLESHOOTING.md) — 세팅·빌드 과정에서 겪은 문제와 해결
