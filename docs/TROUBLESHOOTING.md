@@ -4,6 +4,30 @@
 
 ---
 
+## 8. CI 시뮬레이터 destination 이름 불일치
+
+**증상** — `-destination "name=iPhone 17"`로 지정한 테스트가
+"no available devices matched the request"로 실패했다.
+
+**원인** — Xcode 26.3에 마운트된 런타임은 iOS 26.2이고,
+해당 런타임의 기기는 `iPhone 17 Pro`였다.
+destination의 name 매칭은 완전 일치라 `Pro` 누락으로 실패했다.
+
+**진단 과정의 오류** — 에러 메시지의 "Available destinations"에
+placeholder만 나열된 것을 런타임 부재로 오독했다.
+`xcrun simctl list runtimes`로 확인하자 런타임은 정상 존재했고,
+기기 이름만 달랐다. **에러 메시지가 나열하지 않는 것과
+존재하지 않는 것은 다르다.**
+
+**해결** — 이름 하드코딩을 제거하고
+런타임 조회 → iPhone 기기 UDID 해석 → `-destination "id=$UDID"` 방식으로 전환했다.
+기기가 없으면 `simctl create`로 생성하는 폴백도 함께 넣었다.
+
+**교훈** — 시뮬레이터 이름은 Xcode 버전에 따라 바뀌는 값이다.
+CI에 고정값으로 넣으면 runner 이미지 갱신마다 깨진다.
+
+---
+
 ## 7. `.gitignore`가 이미 추적 중인 파일에 적용되지 않음
 
 **증상** — `.gitignore`에 `*.xcodeproj`, `Derived/`를 추가했는데 `git status`에 계속 잡혔다.
