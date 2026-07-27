@@ -8,6 +8,7 @@
 
 import SwiftUI
 import Domain
+import DesignSystem
 
 public struct SearchView: View {
     @State private var viewModel: SearchViewModel
@@ -31,6 +32,7 @@ public struct SearchView: View {
                     DetailView(viewModel: makeDetailViewModel(book))
                 }
         }
+        .tint(DSColor.accent)
     }
 
     @ViewBuilder
@@ -61,25 +63,19 @@ private struct BookRow: View {
     let book: Book
 
     var body: some View {
-        HStack(spacing: 12) {
-            AsyncImage(url: book.coverURL) { image in
-                image.resizable().scaledToFit()
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 4).fill(.quaternary)
-            }
-            .frame(width: 44, height: 62)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+        HStack(spacing: DSSpacing.md) {
+            BookCover(url: book.coverURL, width: 44, height: 62)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
                 Text(book.title)
-                    .font(.headline)
+                    .font(DSFont.bookTitle)
                     .lineLimit(2)
                 Text(book.author)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(DSFont.author)
+                    .foregroundStyle(DSColor.secondaryText)
                     .lineLimit(1)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, DSSpacing.xs)
     }
 }
