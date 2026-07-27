@@ -34,12 +34,16 @@ enum CompositionRoot {
     )
     private static let libraryRepository = DefaultLibraryRepository(client: informClient)
     private static let findHoldings = FindHoldingsUseCase(repository: libraryRepository)
+    private static let regionProvider = CoreLocationRegionProvider()
 
     static func makeSearchViewModel() -> SearchViewModel {
         SearchViewModel(bookSearch: bookSearch)
     }
 
     static func makeDetailViewModel(book: Book) -> DetailViewModel {
-        DetailViewModel(book: book, bookSearch: bookSearch, findHoldings: findHoldings)
+        DetailViewModel(book: book,
+                        bookSearch: bookSearch,
+                        findHoldings: findHoldings,
+                        regionProvider: regionProvider)
     }
 }

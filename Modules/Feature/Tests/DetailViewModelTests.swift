@@ -40,7 +40,10 @@ import Domain
         let bookSearch = StubBookSearchRepository(onDetail: onDetail)
         let libraryRepo = StubLibraryRepository(onHoldingLibraries: libraries, onLoanStatus: loanable)
         let findHoldings = FindHoldingsUseCase(repository: libraryRepo)
-        return DetailViewModel(book: baseBook, bookSearch: bookSearch, findHoldings: findHoldings)
+        return DetailViewModel(book: baseBook,
+                               bookSearch: bookSearch,
+                               findHoldings: findHoldings,
+                               regionProvider: StubRegionProvider())
     }
 
     @Test func 로드_성공시_소개_보강과_소장_도서관을_함께_채운다() async {
