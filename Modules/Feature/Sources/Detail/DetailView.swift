@@ -9,6 +9,7 @@
 import SwiftUI
 import MapKit
 import Domain
+import DesignSystem
 
 public struct DetailView: View {
     @State private var viewModel: DetailViewModel
@@ -19,7 +20,7 @@ public struct DetailView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: DSSpacing.xl) {
                 header
                 Divider()
                 holdingsSection
@@ -34,29 +35,23 @@ public struct DetailView: View {
     // MARK: - 헤더 (표지 + 서지정보 + 소개)
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 16) {
-                AsyncImage(url: viewModel.book.coverURL) { image in
-                    image.resizable().scaledToFit()
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: 6).fill(.quaternary)
-                }
-                .frame(width: 100, height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+        VStack(alignment: .leading, spacing: DSSpacing.lg) {
+            HStack(alignment: .top, spacing: DSSpacing.lg) {
+                BookCover(url: viewModel.book.coverURL, width: 100, height: 140)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(viewModel.book.title).font(.title3).bold()
-                    Text(viewModel.book.author).font(.subheadline).foregroundStyle(.secondary)
-                    Text(viewModel.book.publisher).font(.footnote).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                    Text(viewModel.book.title).font(DSFont.detailTitle)
+                    Text(viewModel.book.author).font(DSFont.author).foregroundStyle(DSColor.secondaryText)
+                    Text(viewModel.book.publisher).font(DSFont.meta).foregroundStyle(DSColor.secondaryText)
                     if let year = viewModel.book.publicationYear {
-                        Text("\(year)년").font(.footnote).foregroundStyle(.secondary)
+                        Text("\(year)년").font(DSFont.meta).foregroundStyle(DSColor.secondaryText)
                     }
                 }
                 Spacer(minLength: 0)
             }
 
             if let description = viewModel.book.bookDescription, !description.isEmpty {
-                Text(description).font(.callout)
+                Text(description).font(DSFont.body)
             }
         }
     }
@@ -68,7 +63,7 @@ public struct DetailView: View {
         switch viewModel.state {
         case .loading:
             HStack { Spacer(); ProgressView("소장 도서관 찾는 중"); Spacer() }
-                .padding(.vertical, 24)
+                .padding(.vertical, DSSpacing.xl)
         case .failed(let message):
             ContentUnavailableView(message, systemImage: "exclamationmark.triangle")
         case .loaded(let holdings) where holdings.isEmpty:
@@ -76,8 +71,8 @@ public struct DetailView: View {
                                    systemImage: "books.vertical",
                                    description: Text("이 지역 도서관에는 소장 정보가 없어요."))
         case .loaded(let holdings):
-            VStack(alignment: .leading, spacing: 12) {
-                Text("소장 도서관 \(holdings.count)곳").font(.headline)
+            VStack(alignment: .leading, spacing: DSSpacing.md) {
+                Text("소장 도서관 \(holdings.count)곳").font(DSFont.sectionTitle)
                 HoldingsMap(holdings: holdings)
                 ForEach(holdings) { holding in
                     HoldingRow(holding: holding)
@@ -102,12 +97,12 @@ private struct HoldingsMap: View {
             ForEach(pinned) { holding in
                 if let coordinate = holding.library.coordinate {
                     Marker(holding.library.name, coordinate: coordinate)
-                        .tint(holding.isLoanalbe ? .green : .gray)
+                        .tint(holding.isLoanalbe ? DSColor.loanable : DSColor.unavailable)
                 }
             }
         }
         .frame(height: 220)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: DSRadius.lg))
     }
 }
 
@@ -117,35 +112,22 @@ private struct HoldingRow: View {
     let holding: LibraryHolding
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
             HStack {
-                Text(holding.library.name).font(.subheadline).bold()
+                Text(holding.library.name).font(DSFont.author).bold()
                 Spacer()
                 LoanBadge(isLoanable: holding.isLoanalbe)
             }
-            Text(holding.library.address).font(.footnote).foregroundStyle(.secondary)
+            Text(holding.library.address).font(DSFont.meta).foregroundStyle(DSColor.secondaryText)
             if let operatingTime = holding.library.operatingTime, operatingTime != "-" {
                 Label(operatingTime, systemImage: "clock")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(DSFont.caption).foregroundStyle(DSColor.secondaryText)
             }
             if let closed = holding.library.closed, !closed.isEmpty {
                 Label(closed, systemImage: "calendar.badge.exclamationmark")
-                    .font(.caption).foregroundStyle(.orange)
+                    .font(DSFont.caption).foregroundStyle(DSColor.warning)
             }
         }
-        .padding(.vertical, 4)
-    }
-}
-
-private struct LoanBadge: View {
-    let isLoanable: Bool
-
-    var body: some View {
-        Text(isLoanable ? "대출 가능" : "대출 중")
-            .font(.caption).bold()
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(isLoanable ? Color.green.opacity(0.15) : Color.gray.opacity(0.15))
-            .foregroundStyle(isLoanable ? .green : .secondary)
-            .clipShape(Capsule())
+        .padding(.vertical, DSSpacing.xs)
     }
 }
