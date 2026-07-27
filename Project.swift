@@ -73,7 +73,11 @@ let project = Project(
             infoPlist: .extendingDefault(with: [
                 "UILaunchScreen": [:],
                 "NSLocationWhenInUseUsageDescription":
-                    "내 주변 도서관을 거리순으로 보여주기 위해 위치 정보를 사용합니다."
+                    "내 주변 도서관을 거리순으로 보여주기 위해 위치 정보를 사용합니다.",
+                // xcconfig(Secrets.xcconfig)의 키를 Info.plist로 노출해 런타임에 읽는다.
+                // Secrets.xcconfig가 없는 CI에선 빈 문자열로 해석되어 빌드는 통과한다.
+                "DATA4LIBRARY_KEY": "$(DATA4LIBRARY_KEY)",
+                "ALADIN_TTB_KEY": "$(ALADIN_TTB_KEY)"
             ]),
             sources: ["Modules/App/Sources/**"],
             dependencies: [
@@ -88,7 +92,8 @@ let project = Project(
         ),
 
         unitTest(for: "Domain"),
-        unitTest(for: "Data")
+        unitTest(for: "Data"),
+        unitTest(for: "Feature", isolation: "MainActor")
     ],
     schemes: [
         .scheme(
@@ -98,9 +103,10 @@ let project = Project(
             testAction: .targets(
                 [
                     .testableTarget(target: "DomainTests"),
-                    .testableTarget(target: "DataTests")
+                    .testableTarget(target: "DataTests"),
+                    .testableTarget(target: "FeatureTests")
                 ],
-                options: .options(coverage: true, codeCoverageTargets: ["Domain", "Data"])
+                options: .options(coverage: true, codeCoverageTargets: ["Domain", "Data", "Feature"])
             ),
             runAction: .runAction(executable: "App")
         )

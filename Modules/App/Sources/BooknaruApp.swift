@@ -1,10 +1,11 @@
 import SwiftUI
+import Feature
 
 @main
 struct BooknaruApp: App {
     var body: some Scene {
         WindowGroup {
-            Text("Booknaru")
+            SearchView(viewModel: CompositionRoot.makeSearchViewModel())
         }
     }
 }
