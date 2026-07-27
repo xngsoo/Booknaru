@@ -16,16 +16,18 @@ public struct Library: Identifiable, Sendable {
     public let phone: String?
     public let homepage: URL?
     public let operatingTime: String?
-    
+    public let closed: String?   // 휴관일 안내 원문. "지금 갈 수 있는지" 판단에 필요
+
     public var id: String { code }
-    
+
     public init(code: String,
                 name: String,
                 address: String,
                 coordinate: CLLocationCoordinate2D? = nil,
                 phone: String? = nil,
                 homepage: URL? = nil,
-                operatingTime: String? = nil) {
+                operatingTime: String? = nil,
+                closed: String? = nil) {
         self.code = code
         self.name = name
         self.address = address
@@ -33,6 +35,7 @@ public struct Library: Identifiable, Sendable {
         self.phone = phone
         self.homepage = homepage
         self.operatingTime = operatingTime
+        self.closed = closed
     }
 }
 
