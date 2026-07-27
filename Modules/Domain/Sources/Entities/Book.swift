@@ -8,7 +8,7 @@
 
 import Foundation
 
-public struct Book: Hashable, Sendable {
+public struct Book: Identifiable, Hashable, Sendable {
     public let isbn13: ISBN13
     public let title: String
     public let author: String // "글: 홍길동, 그림: 이순신" 형태의 원문
