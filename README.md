@@ -85,9 +85,23 @@ tuist generate
 
 ## 성능 개선 기록
 
-<!-- 도서 상세 진입 시 순차 vs 병렬 조회 수치 -->
-<!-- 캐싱 적용 전후 -->
-_측정 예정_
+### 소장 도서관 대출 여부 조회: 순차 → 병렬
+
+상세 화면은 소장 도서관 N곳의 대출 가능 여부를 각각 조회한다. `FindHoldingsUseCase`가 이 N번의 요청을 `TaskGroup`으로 동시에 보낸다. (모듈별 액터 격리에서 `Domain`/`Data`를 `nonisolated`로 둔 이유가 바로 이 병렬성을 살리기 위함이다.)
+
+네트워크 변수를 배제하고 아키텍처 효과만 보기 위해, 도서관당 고정 지연(50ms)을 준 스텁으로 **순차 루프**와 **병렬 UseCase**를 비교했다.
+
+| 조건 | 순차 | 병렬 (`TaskGroup`) | 개선 |
+|---|---|---|---|
+| 도서관 20곳 · 요청당 50ms | 약 1,125ms | 약 57ms | **약 20배** |
+
+- 측정: `DomainTests/FindHoldingsBenchmarkTests`, 3회 평균, iPhone 시뮬레이터
+- 순차 소요는 `N × 지연`에 비례해 늘지만, 병렬은 가장 느린 한 건에 수렴한다
+- 재현: `xcodebuild test ... -only-testing:DomainTests/FindHoldingsBenchmarkTests`
+
+### 캐싱
+
+아직 미구현. 같은 ISBN 재조회 시 캐시 적용 전후 비교는 이후 기록 예정.
 
 ## 트러블슈팅
 
