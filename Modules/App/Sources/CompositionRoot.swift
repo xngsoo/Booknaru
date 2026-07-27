@@ -17,25 +17,29 @@ import Feature
 /// Feature는 여기서 조립된 Domain 타입만 받고, Data 구현체는 이 파일 밖으로 새지 않는다.
 @MainActor
 enum CompositionRoot {
-    private static let data4LibraryBaseURL = URL(string: "https://data4library.kr/api")!
-    private static let aladinBaseURL = URL(string: "https://www.aladin.co.kr/ttb/api")!
+    private static let secrets = AppSecrets()
+
+    private static let informClient = URLSessionHTTPClient(
+        baseURL: URL(string: "https://data4library.kr/api")!,
+        auth: QueryAuthProvider(name: "authKey", key: secrets.data4LibraryKey)
+    )
+    private static let aladinClient = URLSessionHTTPClient(
+        baseURL: URL(string: "https://www.aladin.co.kr/ttb/api")!,
+        auth: QueryAuthProvider(name: "ttbkey", key: secrets.aladinTTBKey)
+    )
+
+    private static let bookSearch = DefaultBookSearchRepository(
+        informClient: informClient,
+        aladinClient: aladinClient
+    )
+    private static let libraryRepository = DefaultLibraryRepository(client: informClient)
+    private static let findHoldings = FindHoldingsUseCase(repository: libraryRepository)
 
     static func makeSearchViewModel() -> SearchViewModel {
-        let secrets = AppSecrets()
+        SearchViewModel(bookSearch: bookSearch)
+    }
 
-        let informClient = URLSessionHTTPClient(
-            baseURL: data4LibraryBaseURL,
-            auth: QueryAuthProvider(name: "authKey", key: secrets.data4LibraryKey)
-        )
-        let aladinClient = URLSessionHTTPClient(
-            baseURL: aladinBaseURL,
-            auth: QueryAuthProvider(name: "ttbkey", key: secrets.aladinTTBKey)
-        )
-
-        let bookSearch = DefaultBookSearchRepository(
-            informClient: informClient,
-            aladinClient: aladinClient
-        )
-        return SearchViewModel(bookSearch: bookSearch)
+    static func makeDetailViewModel(book: Book) -> DetailViewModel {
+        DetailViewModel(book: book, bookSearch: bookSearch, findHoldings: findHoldings)
     }
 }
