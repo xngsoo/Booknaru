@@ -92,7 +92,8 @@ let project = Project(
         ),
 
         unitTest(for: "Domain"),
-        unitTest(for: "Data")
+        unitTest(for: "Data"),
+        unitTest(for: "Feature", isolation: "MainActor")
     ],
     schemes: [
         .scheme(
@@ -102,9 +103,10 @@ let project = Project(
             testAction: .targets(
                 [
                     .testableTarget(target: "DomainTests"),
-                    .testableTarget(target: "DataTests")
+                    .testableTarget(target: "DataTests"),
+                    .testableTarget(target: "FeatureTests")
                 ],
-                options: .options(coverage: true, codeCoverageTargets: ["Domain", "Data"])
+                options: .options(coverage: true, codeCoverageTargets: ["Domain", "Data", "Feature"])
             ),
             runAction: .runAction(executable: "App")
         )
