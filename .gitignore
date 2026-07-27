@@ -5,3 +5,4 @@
 Derived/
 *.xcuserdata
 Configs/Secrets.xcconfig
+.claude/
