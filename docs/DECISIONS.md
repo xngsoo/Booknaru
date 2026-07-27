@@ -52,3 +52,18 @@ Data 레이어의 HTTP 통신을 `URLSession` + Swift Concurrency로 직접 구�
 추상화가 얇아졌음을 명시해 둔다.
 대안: AuthProvider 제거 후 Repository가 직접 키 부착 — 지금 스펙엔 더 단순하나,
 확장 여지를 남기려 보류.
+
+## 2026-07-27 · 위치 기반 지역 조회의 레이어 배치
+사용자 위치 → 정보나루 지역 코드 변환을 다음처럼 나눈다.
+
+- **Domain** — `RegionProvider` 프로토콜 + `RegionCode(administrativeArea:)` 매핑.
+  위치 취득 실패·권한 거부를 `throws`가 아니라 **기본 지역(서울) 폴백**으로 다룬다.
+  지역은 화면을 못 그릴 만큼 치명적이지 않아서, 에러 전파보다 폴백이 UX에 맞다.
+- **Data** — `CoreLocationRegionProvider`(actor). CoreLocation은 네트워크와 마찬가지로
+  "외부 데이터 취득" 어댑터이므로 Data에 둔다. 별도 Location 모듈은 오버엔지니어링이라 제외.
+  한 번 확정한 지역은 actor에 캐시한다.
+
+iOS 17 제약: `CLLocationUpdate`의 권한 거부 프로퍼티(`authorizationDenied`,
+`locationUnavailable`)가 iOS 18+ 전용이라, 배포 타깃 17.0에서는 거부/지연을
+구분할 API가 없다. → 측위 스트림과 sleep을 `withTaskGroup`으로 레이스시켜
+5초 타임아웃으로 끊고 폴백한다. (iOS 18 상향 시 조기 감지로 대체 가능)

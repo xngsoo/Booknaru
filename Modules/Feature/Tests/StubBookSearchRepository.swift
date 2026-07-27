@@ -38,4 +38,10 @@ struct StubLibraryRepository: LibraryRepository {
     }
 }
 
+/// 위치 해석을 대신하는 스텁. 테스트는 항상 고정 지역을 준다.
+struct StubRegionProvider: RegionProvider {
+    var region: RegionCode = .seoul
+    func currentRegion() async -> RegionCode { region }
+}
+
 struct StubError: Error {}

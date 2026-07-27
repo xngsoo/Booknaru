@@ -26,16 +26,16 @@ public final class DetailViewModel {
 
     private let bookSearch: any BookSearchRepository
     private let findHoldings: FindHoldingsUseCase
-    private let region: RegionCode
+    private let regionProvider: any RegionProvider
 
     public init(book: Book,
                 bookSearch: any BookSearchRepository,
                 findHoldings: FindHoldingsUseCase,
-                region: RegionCode = .seoul) {
+                regionProvider: any RegionProvider) {
         self.book = book
         self.bookSearch = bookSearch
         self.findHoldings = findHoldings
-        self.region = region
+        self.regionProvider = regionProvider
     }
 
     public func load() async {
@@ -58,6 +58,7 @@ public final class DetailViewModel {
     }
 
     private func holdings() async throws -> [LibraryHolding] {
-        try await findHoldings(isbn13: book.isbn13, region: region)
+        let region = await regionProvider.currentRegion()
+        return try await findHoldings(isbn13: book.isbn13, region: region)
     }
 }
