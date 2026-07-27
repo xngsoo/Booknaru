@@ -11,9 +11,12 @@ import Domain
 
 public struct SearchView: View {
     @State private var viewModel: SearchViewModel
+    private let makeDetailViewModel: (Book) -> DetailViewModel
 
-    public init(viewModel: SearchViewModel) {
+    public init(viewModel: SearchViewModel,
+                makeDetailViewModel: @escaping (Book) -> DetailViewModel) {
         _viewModel = State(initialValue: viewModel)
+        self.makeDetailViewModel = makeDetailViewModel
     }
 
     public var body: some View {
@@ -23,6 +26,9 @@ public struct SearchView: View {
                 .searchable(text: $viewModel.keyword, prompt: "책 제목을 검색하세요")
                 .onSubmit(of: .search) {
                     Task { await viewModel.search() }
+                }
+                .navigationDestination(for: Book.self) { book in
+                    DetailView(viewModel: makeDetailViewModel(book))
                 }
         }
     }
@@ -40,7 +46,9 @@ public struct SearchView: View {
             ContentUnavailableView.search
         case .loaded(let books):
             List(books) { book in
-                BookRow(book: book)
+                NavigationLink(value: book) {
+                    BookRow(book: book)
+                }
             }
             .listStyle(.plain)
         case .failed(let message):
