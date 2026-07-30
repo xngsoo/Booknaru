@@ -97,7 +97,7 @@ private struct HoldingsMap: View {
             ForEach(pinned) { holding in
                 if let coordinate = holding.library.coordinate {
                     Marker(holding.library.name, coordinate: coordinate)
-                        .tint(holding.isLoanalbe ? DSColor.loanable : DSColor.unavailable)
+                        .tint(holding.isLoanable ? DSColor.loanable : DSColor.unavailable)
                 }
             }
         }
@@ -116,7 +116,7 @@ private struct HoldingRow: View {
             HStack {
                 Text(holding.library.name).font(DSFont.author).bold()
                 Spacer()
-                LoanBadge(isLoanable: holding.isLoanalbe)
+                LoanBadge(isLoanable: holding.isLoanable)
             }
             Text(holding.library.address).font(DSFont.meta).foregroundStyle(DSColor.secondaryText)
             if let operatingTime = holding.library.operatingTime, operatingTime != "-" {

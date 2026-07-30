@@ -62,7 +62,7 @@ import Domain
             Issue.record("loaded 상태여야 하는데 \(vm.state)"); return
         }
         #expect(holdings.count == 1)
-        #expect(holdings.first?.isLoanalbe == true)
+        #expect(holdings.first?.isLoanable == true)
     }
 
     @Test func 소개_보강이_실패해도_기본_book으로_화면을_그린다() async {

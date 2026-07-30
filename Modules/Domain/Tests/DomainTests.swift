@@ -42,7 +42,7 @@ struct FindHoldingsUseCaseTests {
         let result = try await sut(isbn13: ISBN13("9788934972464")!, region: .seoul)
         
         #expect(result.count == 2)
-        #expect(result.first { $0.id == "111456"}?.isLoanalbe == false)
-        #expect(result.first { $0.id == "111108"}?.isLoanalbe == true)
+        #expect(result.first { $0.id == "111456"}?.isLoanable == false)
+        #expect(result.first { $0.id == "111108"}?.isLoanable == true)
     }
 }
