@@ -6,7 +6,7 @@
 
 # 인증서를 보관할 private repo. 아직 안 만들었으면 GitHub에서 빈 private repo를 먼저 생성.
 # 환경변수 MATCH_GIT_URL 로 덮어쓸 수 있다.
-git_url(ENV["MATCH_GIT_URL"] || "https://github.com/xngsoo/booknaru-certificates")
+git_url(ENV["MATCH_GIT_URL"] || "git@github.com:xngsoo/booknaru-certificates.git")
 
 storage_mode("git")
 

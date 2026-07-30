@@ -14,3 +14,7 @@ fastlane/test_output/
 fastlane/.env
 fastlane/.env.*
 !fastlane/.env.example
+
+# gym(build_app) 산출물
+*.ipa
+*.dSYM.zip

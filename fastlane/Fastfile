@@ -16,6 +16,22 @@ platform :ios do
     sh("cd .. && tuist install && tuist generate --no-open")
   end
 
+  # App Store Connect API 인증 (Apple ID + 2FA 대신, CLI/CI 모두에서 동작)
+  def asc_api_key
+    app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_CONTENT"),
+      is_key_content_base64: true
+    )
+  end
+
+  # ─────────────────────────────────────────────────────────────
+  desc "서명 자산 최초 생성/갱신 (로컬에서 1회) — 인증서·프로파일을 만들어 certs repo에 push"
+  lane :certificates do
+    match(type: "appstore", readonly: false, api_key: asc_api_key)
+  end
+
   # ─────────────────────────────────────────────────────────────
   desc "테스트 실행 (자격증명 불필요 — 지금 바로 검증 가능)"
   lane :test do
@@ -31,13 +47,8 @@ platform :ios do
   #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_CONTENT  (App Store Connect API Key)
   #   MATCH_PASSWORD, MATCH_GIT_BASIC_AUTHORIZATION (match 복호화·certs repo 접근)
   lane :beta do
-    # 1) App Store Connect API 인증 (Apple ID + 2FA 대신, CI에서 동작하는 방식)
-    api_key = app_store_connect_api_key(
-      key_id: ENV.fetch("ASC_KEY_ID"),
-      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
-      key_content: ENV.fetch("ASC_KEY_CONTENT"),
-      is_key_content_base64: true
-    )
+    # 1) App Store Connect API 인증
+    api_key = asc_api_key
 
     # 2) 코드 서명 자산 동기화 (certs repo에서 복호화·설치)
     #    CI에서는 readonly로, 로컬 최초 생성은 `fastlane match appstore`로 별도 수행.

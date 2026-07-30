@@ -80,6 +80,7 @@ let project = Project(
                 "ALADIN_TTB_KEY": "$(ALADIN_TTB_KEY)"
             ]),
             sources: ["Modules/App/Sources/**"],
+            resources: ["Modules/App/Resources/**"],
             dependencies: [
                 .target(name: "Feature"),
                 .target(name: "Data")
@@ -88,11 +89,15 @@ let project = Project(
                 base: sharedBaseSettings.merging([
                     "SWIFT_DEFAULT_ACTOR_ISOLATION": "MainActor",
                     // 팀은 모든 구성 공통. 서명 방식은 아래 구성별로 나눈다.
-                    "DEVELOPMENT_TEAM": "LX474376F5"
+                    "DEVELOPMENT_TEAM": "LX474376F5",
+                    // Assets.xcassets의 AppIcon 사용
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon"
                 ]) { _, new in new },
                 configurations: [
-                    // Debug: 자동 서명 유지 → 로컬 기기 디버그·시뮬레이터 테스트 그대로.
-                    .debug(name: "Debug", xcconfig: "Configs/Debug.xcconfig"),
+                    // Debug: 자동 서명 → 실기기 연결 시 Xcode가 개발용 프로파일을 자동 생성.
+                    .debug(name: "Debug", settings: [
+                        "CODE_SIGN_STYLE": "Automatic"
+                    ], xcconfig: "Configs/Debug.xcconfig"),
                     // Release: match가 설치하는 App Store 배포 프로파일로 수동 서명(아카이브 전용).
                     .release(name: "Release", settings: [
                         "CODE_SIGN_STYLE": "Manual",

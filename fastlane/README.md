@@ -15,6 +15,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios certificates
+
+```sh
+[bundle exec] fastlane ios certificates
+```
+
+서명 자산 최초 생성/갱신 (로컬에서 1회) — 인증서·프로파일을 만들어 certs repo에 push
+
 ### ios test
 
 ```sh
