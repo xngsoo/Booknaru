@@ -74,6 +74,9 @@ let project = Project(
                 // 홈 화면 표시 이름. 없으면 프로덕트명("App")이 그대로 노출된다(전 구성 공통).
                 "CFBundleDisplayName": "책나루",
                 "CFBundleName": "책나루",
+                // 마케팅 버전 기본값. Tuist 기본값 "1.0" 대신 semver로 명시.
+                // 배포 시엔 beta 레인이 태그(vX.Y.Z)에서 이 값을 덮어쓴다.
+                "CFBundleShortVersionString": "1.0.0",
                 // HTTPS(TLS) 외 비면제 암호화를 쓰지 않음 → 수출 규정 면제.
                 // 선언해 두면 TestFlight 업로드마다 뜨는 수출 규정 문서 요청이 사라진다.
                 "ITSAppUsesNonExemptEncryption": false,

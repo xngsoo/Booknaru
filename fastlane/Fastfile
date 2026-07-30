@@ -69,6 +69,13 @@ platform :ios do
       xcodeproj: "Booknaru.xcodeproj"
     )
 
+    # 3-1) 태그(vX.Y.Z)로 트리거된 배포면 마케팅 버전을 태그와 맞춘다.
+    #      태그가 없으면(수동 실행·로컬) Project.swift의 기본값(1.0.0)을 그대로 쓴다.
+    if ENV["GITHUB_REF_NAME"].to_s =~ /\Av(\d+\.\d+\.\d+)\z/
+      increment_version_number(version_number: $1, xcodeproj: "Booknaru.xcodeproj")
+      UI.message("태그에서 마케팅 버전 설정: #{$1}")
+    end
+
     # 4) 아카이브 → 서명된 .ipa
     build_app(
       workspace: WORKSPACE,
