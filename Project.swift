@@ -71,6 +71,9 @@ let project = Project(
             bundleId: bundleIDPrefix,
             deploymentTargets: deploymentTarget,
             infoPlist: .extendingDefault(with: [
+                // 홈 화면 표시 이름. 없으면 프로덕트명("App")이 그대로 노출된다(전 구성 공통).
+                "CFBundleDisplayName": "책나루",
+                "CFBundleName": "책나루",
                 "UILaunchScreen": [:],
                 "NSLocationWhenInUseUsageDescription":
                     "내 주변 도서관을 거리순으로 보여주기 위해 위치 정보를 사용합니다.",
