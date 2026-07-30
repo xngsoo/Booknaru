@@ -67,3 +67,24 @@ iOS 17 제약: `CLLocationUpdate`의 권한 거부 프로퍼티(`authorizationDe
 `locationUnavailable`)가 iOS 18+ 전용이라, 배포 타깃 17.0에서는 거부/지연을
 구분할 API가 없다. → 측위 스트림과 sleep을 `withTaskGroup`으로 레이스시켜
 5초 타임아웃으로 끊고 폴백한다. (iOS 18 상향 시 조기 감지로 대체 가능)
+
+## 2026-07-30 · 캐싱은 데코레이터 Repository로, 대출 여부만 TTL
+같은 ISBN 재조회 비용을 캐싱으로 흡수하되, 배치와 정책을 다음처럼 정한다.
+
+- **배치 — 데코레이터** — `Default*Repository`를 고치지 않고 같은 프로토콜을 구현하는
+  `Caching*Repository`로 감싼다. `Domain`/`Feature`는 `any …Repository`에만 의존하므로
+  화면·UseCase 코드가 바뀌지 않고, 조립은 `CompositionRoot` 한 곳에서만 래핑을 더한다.
+  캐싱을 명시적·교체 가능·독립 테스트 가능한 한 겹으로 드러내려는 선택 —
+  `AuthProvider`를 "인증은 client 설정에 속한다"며 분리한 것과 같은 결이다.
+- **동시성 — actor 캐시** — `loanStatus`가 `TaskGroup`으로 N개 동시에 들어오므로
+  저장소(`InMemoryCache`)를 actor로 두어 데이터 레이스를 원천 차단한다.
+  Data를 nonisolated로 둔 결정과 맞물린다.
+- **정책 — 휘발성으로 나눔** — 서지(`detail`)·소장 도서관(`holdingLibraries`)은
+  사실상 불변이라 세션 캐시(TTL 없음). 대출 가능 여부(`loanStatus`)는 반납/대출로
+  자주 바뀌므로 **60초 TTL**. 세션 내내 캐싱하면 "반납됐는데 대출 중으로 표시"되는
+  정합성 버그가 생긴다. 60초는 상세 화면 내 이동·재진입 구간을 흡수하면서
+  반납 반영도 놓치지 않는 절충값이다. `search`는 재조회 패턴이 약해 패스스루.
+
+대안: HTTPClient(URL) 레벨 캐싱 — 범용이지만 "대출 여부만 짧은 TTL" 같은
+도메인 의미 기반 정책을 표현할 수 없어 제외.
+대안: in-flight 요청 병합·LRU 용량 제한 — 현재 규모엔 과설계라 확장 여지로만 남김.

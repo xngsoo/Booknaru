@@ -28,11 +28,17 @@ enum CompositionRoot {
         auth: QueryAuthProvider(name: "ttbkey", key: secrets.aladinTTBKey)
     )
 
-    private static let bookSearch = DefaultBookSearchRepository(
-        informClient: informClient,
-        aladinClient: aladinClient
+    // Repository는 캐싱 데코레이터로 감싼다. Default 구현과 Caching 래퍼 모두 여기서만 조립되고,
+    // 화면·UseCase는 프로토콜 타입만 받으므로 캐싱이 얹힌 사실을 알지 못한다.
+    private static let bookSearch: any BookSearchRepository = CachingBookSearchRepository(
+        base: DefaultBookSearchRepository(
+            informClient: informClient,
+            aladinClient: aladinClient
+        )
     )
-    private static let libraryRepository = DefaultLibraryRepository(client: informClient)
+    private static let libraryRepository: any LibraryRepository = CachingLibraryRepository(
+        base: DefaultLibraryRepository(client: informClient)
+    )
     private static let findHoldings = FindHoldingsUseCase(repository: libraryRepository)
     private static let regionProvider = CoreLocationRegionProvider()
 

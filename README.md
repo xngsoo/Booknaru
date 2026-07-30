@@ -99,9 +99,22 @@ tuist generate
 - 순차 소요는 `N × 지연`에 비례해 늘지만, 병렬은 가장 느린 한 건에 수렴한다
 - 재현: `xcodebuild test ... -only-testing:DomainTests/FindHoldingsBenchmarkTests`
 
-### 캐싱
+### 캐싱: 같은 ISBN 재조회
 
-아직 미구현. 같은 ISBN 재조회 시 캐시 적용 전후 비교는 이후 기록 예정.
+상세 화면 한 번은 서지·소개(2) + 소장 도서관(1) + 도서관별 대출 여부(N) = **3+N개 요청**을 낸다. 검색↔상세를 오가며 같은 책을 다시 열면 이 요청이 그대로 재발생한다. Data 계층에 **캐싱 데코레이터**(`Caching{BookSearch,Library}Repository`)를 얹어, 서지·소장 도서관은 세션 캐시, 대출 여부는 60초 TTL로 재조회를 흡수한다.
+
+네트워크 변수를 배제하려 base에 고정 지연(50ms)만 준 스텁으로 **콜드(미스)** 와 **웜(히트)** 을 비교했다.
+
+| 조건 | 콜드 (미스) | 웜 (히트) | 개선 |
+|---|---|---|---|
+| 도서관 20곳 · 요청당 50ms | 약 117ms | 약 0.02ms | **약 6,700배** |
+
+- 측정: `DataTests/CacheBenchmarkTests`, iPhone 시뮬레이터
+- 웜은 네트워크 왕복 없이 메모리에서 반환되므로 base 지연에 무관하게 수렴한다
+- 대출 여부(`loanStatus`)만 60초 TTL을 두어 반납/대출 변화를 놓치지 않는다 ([설계 결정](docs/DECISIONS.md) 참조)
+- 재현: `xcodebuild test ... -only-testing:DataTests/CacheBenchmarkTests`
+
+**데코레이터라 Feature/Domain 코드는 한 줄도 바뀌지 않았다.** 조립은 `CompositionRoot` 한 곳에서만 래핑을 추가했다 — 계층 분리가 실제로 작동한다는 증거.
 
 ## 트러블슈팅
 
