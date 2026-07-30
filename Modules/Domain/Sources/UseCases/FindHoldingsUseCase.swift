@@ -11,20 +11,20 @@
 
 public struct FindHoldingsUseCase: Sendable {
     private let repository: any LibraryRepository
-    
+
     public init(repository: any LibraryRepository) {
         self.repository = repository
     }
-    
+
     public func callAsFunction(isbn13: ISBN13, region: RegionCode) async throws -> [LibraryHolding] {
         let libraries = try await repository.holdingLibraries(isbn13: isbn13, region: region)
-        
+
         // 도서관 N곳의 bookExist를 동시에. Domain이 nonisolated라 메인에 묶이지 않는다.
         return try await withThrowingTaskGroup(of: LibraryHolding.self) { group in
             for library in libraries {
                 group.addTask {
                     let loanable = try await repository.loanStatus(isbn13: isbn13, libCode: library.code)
-                    return LibraryHolding(library: library, isLoanalbe: loanable)
+                    return LibraryHolding(library: library, isLoanable: loanable)
                 }
             }
             var result: [LibraryHolding] = []
@@ -34,6 +34,4 @@ public struct FindHoldingsUseCase: Sendable {
             return result
         }
     }
-    
-    
 }

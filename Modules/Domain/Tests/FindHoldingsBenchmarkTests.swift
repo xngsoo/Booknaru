@@ -44,7 +44,7 @@ struct FindHoldingsBenchmarkTests {
             var holdings: [LibraryHolding] = []
             for library in libraries {
                 let loanable = try await repo.loanStatus(isbn13: isbn, libCode: library.code)
-                holdings.append(LibraryHolding(library: library, isLoanalbe: loanable))
+                holdings.append(LibraryHolding(library: library, isLoanable: loanable))
             }
             return holdings.count
         }

@@ -11,11 +11,11 @@
 
 public struct LibraryHolding: Identifiable, Hashable, Sendable {
     public let library: Library
-    public let isLoanalbe: Bool
+    public let isLoanable: Bool
     public var id: String { library.code }
-    
-    public init(library: Library, isLoanalbe: Bool) {
+
+    public init(library: Library, isLoanable: Bool) {
         self.library = library
-        self.isLoanalbe = isLoanalbe
+        self.isLoanable = isLoanable
     }
 }
