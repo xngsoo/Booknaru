@@ -1,0 +1,10 @@
+app_identifier("com.xngsoo.booknaru") # Project.swift의 App 타깃 bundleId와 일치
+
+# App Store Connect API Key로 인증하므로 apple_id는 필수가 아니다.
+# 로컬에서 Apple ID 로그인을 쓰고 싶으면 주석을 풀어 사용.
+# apple_id("hanxngsoo@gmail.com")
+
+# Apple Developer 가입 후 팀 ID를 채운다. (ASC → Membership에서 확인)
+team_id("LX474376F5")
+
+# 문서: https://docs.fastlane.tools/advanced/#appfile

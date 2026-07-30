@@ -1,0 +1,48 @@
+name: Deploy
+
+# 태그 푸시(v1.0.0 등) 또는 수동 실행 시 TestFlight로 배포.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  testflight:
+    runs-on: macos-15
+    env:
+      XCODE_APP: /Applications/Xcode_26.3.app
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s "$XCODE_APP"
+
+      # 실제 동작하는 TestFlight 빌드가 되도록 진짜 API 키를 주입한다.
+      # (CI 테스트 빌드는 빈 키로도 통과하지만, 배포 빌드는 런타임에 키가 필요)
+      - name: Inject Secrets.xcconfig
+        run: |
+          cat > Configs/Secrets.xcconfig <<EOF
+          DATA4LIBRARY_KEY = ${{ secrets.DATA4LIBRARY_KEY }}
+          ALADIN_TTB_KEY = ${{ secrets.ALADIN_TTB_KEY }}
+          EOF
+
+      - uses: jdx/mise-action@v2        # mise.toml의 tuist 설치
+
+      - uses: ruby/setup-ruby@v1        # Gemfile.lock 기준 ruby+bundler, 캐시
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+
+      - name: fastlane beta
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # CI 러너엔 SSH 키가 없으므로 Matchfile의 SSH 기본값 대신 HTTPS로 certs repo에 접근한다.
+          # (MATCH_GIT_BASIC_AUTHORIZATION은 HTTPS일 때만 적용됨)
+          MATCH_GIT_URL: https://github.com/xngsoo/booknaru-certificates
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+        run: bundle exec fastlane beta
