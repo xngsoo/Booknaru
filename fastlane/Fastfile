@@ -1,0 +1,69 @@
+# Booknaru fastlane 설정
+# docs: https://docs.fastlane.tools
+#
+# 이 프로젝트는 .xcodeproj를 커밋하지 않고 Tuist로 생성한다.
+# 따라서 모든 레인은 before_all에서 `tuist generate`로 프로젝트를 먼저 만든다.
+
+default_platform(:ios)
+
+WORKSPACE = "Booknaru.xcworkspace"
+SCHEME    = "Booknaru"
+
+platform :ios do
+  before_all do
+    # .xcodeproj/.xcworkspace가 없으므로 매 실행마다 생성한다.
+    # Fastfile은 fastlane/ 안에서 도므로 프로젝트 루트로 올라가 실행.
+    sh("cd .. && tuist install && tuist generate --no-open")
+  end
+
+  # ─────────────────────────────────────────────────────────────
+  desc "테스트 실행 (자격증명 불필요 — 지금 바로 검증 가능)"
+  lane :test do
+    run_tests(
+      workspace: WORKSPACE,
+      scheme: SCHEME
+    )
+  end
+
+  # ─────────────────────────────────────────────────────────────
+  desc "TestFlight 베타 배포"
+  # 필요한 환경변수(로컬은 fastlane/.env / CI는 GitHub Secrets):
+  #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_CONTENT  (App Store Connect API Key)
+  #   MATCH_PASSWORD, MATCH_GIT_BASIC_AUTHORIZATION (match 복호화·certs repo 접근)
+  lane :beta do
+    # 1) App Store Connect API 인증 (Apple ID + 2FA 대신, CI에서 동작하는 방식)
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_CONTENT"),
+      is_key_content_base64: true
+    )
+
+    # 2) 코드 서명 자산 동기화 (certs repo에서 복호화·설치)
+    #    CI에서는 readonly로, 로컬 최초 생성은 `fastlane match appstore`로 별도 수행.
+    match(
+      type: "appstore",
+      readonly: is_ci,
+      api_key: api_key
+    )
+
+    # 3) 빌드 번호를 ASC 최신 +1로 (중복 업로드 거부 방지)
+    increment_build_number(
+      build_number: latest_testflight_build_number(api_key: api_key) + 1,
+      xcodeproj: "Booknaru.xcodeproj"
+    )
+
+    # 4) 아카이브 → 서명된 .ipa
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      export_method: "app-store"
+    )
+
+    # 5) TestFlight 업로드
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

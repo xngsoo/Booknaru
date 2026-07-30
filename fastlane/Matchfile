@@ -1,0 +1,16 @@
+# match 설정 — 코드 서명 자산(인증서·프로파일)을 암호화해 private git repo에 보관/동기화한다.
+# docs: https://docs.fastlane.tools/actions/match/
+#
+# 최초 1회(내 Mac): `bundle exec fastlane match appstore` 로 생성·push.
+# 이후(특히 CI): beta 레인이 readonly로 복호화·설치한다.
+
+# 인증서를 보관할 private repo. 아직 안 만들었으면 GitHub에서 빈 private repo를 먼저 생성.
+# 환경변수 MATCH_GIT_URL 로 덮어쓸 수 있다.
+git_url(ENV["MATCH_GIT_URL"] || "https://github.com/xngsoo/booknaru-certificates")
+
+storage_mode("git")
+
+# App Store/TestFlight 배포용 = appstore 타입(Distribution 인증서 + App Store 프로파일)
+type("appstore")
+
+app_identifier(["com.xngsoo.booknaru"])

@@ -6,3 +6,11 @@ Derived/
 *.xcuserdata
 Configs/Secrets.xcconfig
 .claude/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+fastlane/.env
+fastlane/.env.*
+!fastlane/.env.example
