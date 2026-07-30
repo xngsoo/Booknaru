@@ -66,7 +66,7 @@ let project = Project(
 
         .target(
             name: "App",
-            destinations: .iOS,
+            destinations: [.iPhone],   // iPhone 전용. .iOS는 iPad까지 포함해 iPad 스크린샷을 요구한다.
             product: .app,
             bundleId: bundleIDPrefix,
             deploymentTargets: deploymentTarget,
