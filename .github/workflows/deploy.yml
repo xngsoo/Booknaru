@@ -41,5 +41,8 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_CONTENT: ${{ secrets.ASC_KEY_CONTENT }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          # CI 러너엔 SSH 키가 없으므로 Matchfile의 SSH 기본값 대신 HTTPS로 certs repo에 접근한다.
+          # (MATCH_GIT_BASIC_AUTHORIZATION은 HTTPS일 때만 적용됨)
+          MATCH_GIT_URL: https://github.com/xngsoo/booknaru-certificates
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
         run: bundle exec fastlane beta
