@@ -88,3 +88,19 @@ iOS 17 제약: `CLLocationUpdate`의 권한 거부 프로퍼티(`authorizationDe
 대안: HTTPClient(URL) 레벨 캐싱 — 범용이지만 "대출 여부만 짧은 TTL" 같은
 도메인 의미 기반 정책을 표현할 수 없어 제외.
 대안: in-flight 요청 병합·LRU 용량 제한 — 현재 규모엔 과설계라 확장 여지로만 남김.
+
+## 2026-07-30 · 배포 자동화는 fastlane, 테스트는 xcodebuild 유지 (하이브리드)
+TestFlight 배포를 fastlane으로 자동화하되, 테스트 CI는 기존 `xcodebuild`를 그대로 둔다.
+
+- **하이브리드 근거** — 이미 `xcodebuild test` CI가 잘 돈다. 이를 fastlane `scan`으로 감싸도
+  실익이 없고 레이어만 는다. fastlane은 그 강점인 **코드 서명·아카이브·업로드**(match·gym·pilot)에만 쓴다.
+- **서명은 match** — Distribution 인증서·프로파일을 암호화해 별도 private repo에 두고 로컬·CI가
+  동일하게 복호화해 쓴다. 인증서를 사람이 주고받지 않고, CI 러너가 빈 키체인이어도 재현된다.
+- **인증은 App Store Connect API Key** — Apple ID+2FA는 CI에서 사람이 코드를 못 넣어 막힌다.
+  API Key는 2FA 없이 서버 인증이 되어 자동화의 전제.
+- **구성별 서명 분리** — Debug 자동 서명(로컬 실기기 개발), Release 수동 서명(match, 배포).
+  프로젝트 전역 xcconfig가 아니라 **App 타깃 Release 구성에만** 건다. 전역에 두면 프레임워크
+  서명까지 깨지고, Debug에 두면 로컬 개발·시뮬레이터 테스트가 깨진다.
+
+대안: Xcode Cloud — 설정은 간단하나 서명·비밀 관리가 블랙박스라 학습 가치가 낮아 제외.
+대안: fastlane으로 테스트까지 일원화 — 현재 테스트 CI를 대체할 이유가 없어 보류.

@@ -24,7 +24,8 @@
 | 동시성 | Swift Concurrency, 모듈별 액터 격리 |
 | 모듈화 | Tuist |
 | 테스트 | Swift Testing, URLProtocol 스텁 |
-| CI | GitHub Actions |
+| CI | GitHub Actions (PR마다 빌드·테스트) |
+| 배포 | fastlane (`match`·`gym`·`pilot`) → TestFlight |
 
 ## 모듈 구조
 
@@ -82,6 +83,21 @@ tuist generate
 - `ALADIN_TTB_KEY` — 알라딘 TTB 키 (알라딘 오픈 API 인증키)
 
 `.xcodeproj`는 커밋하지 않는다. `Project.swift`가 유일한 진실의 원천이며 프로젝트 파일은 매번 생성한다.
+
+## 배포
+
+TestFlight 배포를 fastlane으로 자동화했다. **테스트는 `xcodebuild`, 서명·아카이브·업로드는 fastlane**으로 나눈 하이브리드 구성 — 이미 잘 도는 테스트 CI를 감싸지 않고, fastlane은 그 강점인 코드 서명·배포에만 쓴다.
+
+| 레인 | 하는 일 |
+|---|---|
+| `test` | `tuist generate` 후 테스트 (자격증명 불필요) |
+| `certificates` | `match`로 배포 인증서·프로파일 생성 후 암호화해 별도 private repo에 보관 |
+| `beta` | `match` 서명 → 빌드번호 +1 → 아카이브(`.ipa`) → TestFlight 업로드 |
+
+- **코드 서명** — `match`가 Distribution 인증서·프로파일을 암호화해 git repo에 두고, 로컬·CI가 동일하게 복호화해 쓴다. 인증서를 사람이 주고받지 않는다.
+- **인증** — App Store Connect API Key로 App Store Connect에 접근(Apple ID+2FA 없이 CI에서 동작).
+- **구성별 서명 분리** — Debug는 자동 서명(실기기 개발), Release는 `match` 수동 서명(배포). 프레임워크·시뮬레이터 테스트가 영향받지 않도록 App 타깃 Release 구성에만 건다.
+- **CI** — 태그(`v*`) 푸시 시 [`deploy.yml`](.github/workflows/deploy.yml)이 `fastlane beta`를 돌려 자동 배포. 필요한 키는 GitHub Secrets로 주입하고, 배포 빌드에는 실제 API 키가 담기도록 `Secrets.xcconfig`를 CI에서 생성한다.
 
 ## 성능 개선 기록
 
@@ -146,6 +162,7 @@ tuist generate
 - `Feature`에서는 컴파일 에러, `Data`에서는 통과 — 이 비대칭이 설정이 걸렸다는 증거
 - PR마다 GitHub Actions에서 빌드·테스트 자동 실행
 - `main` 브랜치는 CI 통과를 머지 조건으로 강제
+- 실기기 스모크 테스트로 실제 API 경로 확인(위치 권한, 검색 → 상세 → 소장 도서관·지도), TestFlight 배포까지 검증
 
 ## 문서
 
