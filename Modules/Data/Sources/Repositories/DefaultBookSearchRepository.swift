@@ -49,6 +49,6 @@ public struct DefaultBookSearchRepository: BookSearchRepository {
             .init(name: "Version", value: "20131101")
         ])
         let dto: AladinItemResponse = try await aladinClient.send(endpoint)
-        return dto.item.first?.description
+        return dto.item.first?.description?.htmlUnescaped
     }
 }

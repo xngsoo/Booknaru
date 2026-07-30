@@ -13,13 +13,13 @@ extension Library {
         }()
         
         self.init(code: doc.libCode,
-                  name: doc.libName,
-                  address: doc.address,
+                  name: doc.libName.htmlUnescaped,
+                  address: doc.address.htmlUnescaped,
                   coordinate: coordinate,
                   phone: doc.tel,
                   homepage: doc.homepage.flatMap(URL.init(string: )),
-                  operatingTime: doc.operatingTime,
-                  closed: doc.closed
+                  operatingTime: doc.operatingTime?.htmlUnescaped,
+                  closed: doc.closed?.htmlUnescaped
         )
     }
 }
