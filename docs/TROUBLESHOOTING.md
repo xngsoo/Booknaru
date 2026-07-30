@@ -4,6 +4,40 @@
 
 ---
 
+## 14. CI에서 codesign이 키체인 확인을 기다리며 무한 대기
+
+**증상** — `fastlane beta`가 CI에서 `Signing DesignSystem.framework`에 멈춰 30분 넘게 진행되지 않았다. 로컬에선 잘 됐다.
+
+**원인** — `match`가 서명키를 키체인에 설치하지만, codesign이 그 키에 접근할 때 **"키체인 접근 허용" 확인**을 요구한다. 로컬은 다이얼로그를 클릭하면 되지만, **헤드리스 CI 러너는 눌러줄 사람이 없어** 영원히 대기한다.
+
+**해결** — `beta` 레인 시작에 `setup_ci`를 추가했다. CI에서 임시 키체인을 만들어 unlock하고 **partition list(ACL)** 를 설정해, codesign이 확인 없이 바로 서명하게 한다. 로컬 실행에선 자동으로 건너뛴다.
+
+**교훈** — "로컬에서 되니 CI도 되겠지"가 안 통하는 대표 사례. CI는 헤드리스라 **사람의 클릭을 전제한 동작**이 전부 멈춘다.
+
+---
+
+## 13. CI의 match가 certs repo 접근에 실패 (403 → 400)
+
+**증상** — CI `match`가 인증서 repo clone에서 실패했다. 값을 고칠 때마다 에러 코드가 **403 → 400**으로 오갔다.
+
+**원인**
+- **SSH vs HTTPS** — Matchfile git_url이 SSH(`git@...`)인데 CI 러너엔 SSH 키가 없다. → deploy.yml에 `MATCH_GIT_URL`(https)을 주입해 HTTPS로 전환.
+- **403** — HTTPS 토큰(`MATCH_GIT_BASIC_AUTHORIZATION`)이 그 private repo 접근 권한이 없음.
+- **400** — 헤더가 깨진 것. macOS `base64`가 76자마다 넣는 **줄바꿈**이 섞여 `Authorization: Basic ...` 값이 망가졌다.
+
+**해결** — match가 쓰는 헤더를 로컬에서 그대로 재현해 먼저 검증한 뒤, 검증된 값을 그대로 시크릿에 주입했다.
+
+```bash
+AUTH=$(printf 'x-access-token:%s' "$PAT" | base64 | tr -d '\n')   # 줄바꿈 제거가 핵심
+git clone https://github.com/xngsoo/booknaru-certificates /tmp/cc \
+  -c http.extraheader="Authorization: Basic $AUTH"                 # match와 동일한 방식으로 검증
+printf '%s' "$AUTH" | gh secret set MATCH_GIT_BASIC_AUTHORIZATION  # 검증된 값을 그대로
+```
+
+**교훈** — 에러 코드를 구분해 읽어야 한다. **401(토큰 무효) / 403(권한 없음) / 400(형식 오류)** 는 원인이 완전히 다르다. 하나로 뭉뚱그리면 엉뚱한 데를 고친다.
+
+---
+
 ## 12. 스텁으론 안 보이던 실데이터 이슈 (실기기 스모크 테스트)
 
 **증상** — 실기기에서 실제 API로 돌리자 (1) 일부 표지가 회색으로 안 뜨고, (2) 운영시간·책 소개에 `&middot;` `&lt;` `&gt;` 같은 HTML 엔티티가 그대로 노출됐다.
