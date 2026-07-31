@@ -22,7 +22,7 @@ public struct DetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: DSSpacing.xl) {
                 header
-                Divider()
+                DSDivider()
                 holdingsSection
             }
             .padding()
@@ -62,21 +62,21 @@ public struct DetailView: View {
     private var holdingsSection: some View {
         switch viewModel.state {
         case .loading:
-            HStack { Spacer(); ProgressView("소장 도서관 찾는 중"); Spacer() }
+            LoadingIndicator("소장 도서관 찾는 중")
                 .padding(.vertical, DSSpacing.xl)
         case .failed(let message):
-            ContentUnavailableView(message, systemImage: "exclamationmark.triangle")
+            EmptyStateView(message, systemImage: "exclamationmark.triangle",
+                           tint: DSColor.warning)
         case .loaded(let holdings) where holdings.isEmpty:
-            ContentUnavailableView("소장 도서관이 없습니다",
-                                   systemImage: "books.vertical",
-                                   description: Text("이 지역 도서관에는 소장 정보가 없어요."))
+            EmptyStateView("소장 도서관이 없습니다",
+                           systemImage: "books.vertical",
+                           message: "이 지역 도서관에는 소장 정보가 없어요.")
         case .loaded(let holdings):
             VStack(alignment: .leading, spacing: DSSpacing.md) {
-                Text("소장 도서관 \(holdings.count)곳").font(DSFont.sectionTitle)
+                SectionHeader("소장 도서관 \(holdings.count)곳")
                 HoldingsMap(holdings: holdings)
                 ForEach(holdings) { holding in
                     HoldingRow(holding: holding)
-                    if holding.id != holdings.last?.id { Divider() }
                 }
             }
         }
@@ -103,31 +103,5 @@ private struct HoldingsMap: View {
         }
         .frame(height: 220)
         .clipShape(RoundedRectangle(cornerRadius: DSRadius.lg))
-    }
-}
-
-// MARK: - 도서관 한 곳
-
-private struct HoldingRow: View {
-    let holding: LibraryHolding
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.xs) {
-            HStack {
-                Text(holding.library.name).font(DSFont.author).bold()
-                Spacer()
-                LoanBadge(isLoanable: holding.isLoanable)
-            }
-            Text(holding.library.address).font(DSFont.meta).foregroundStyle(DSColor.secondaryText)
-            if let operatingTime = holding.library.operatingTime, operatingTime != "-" {
-                Label(operatingTime, systemImage: "clock")
-                    .font(DSFont.caption).foregroundStyle(DSColor.secondaryText)
-            }
-            if let closed = holding.library.closed, !closed.isEmpty {
-                Label(closed, systemImage: "calendar.badge.exclamationmark")
-                    .font(DSFont.caption).foregroundStyle(DSColor.warning)
-            }
-        }
-        .padding(.vertical, DSSpacing.xs)
     }
 }
