@@ -8,6 +8,7 @@
 
 #if DEBUG
 import Foundation
+import CoreLocation
 import Domain
 
 /// 개발계 전용 더미. 실제 API를 호출하지 않고 고정 데이터만 돌려준다.
@@ -56,13 +57,13 @@ struct DummyBookSearchRepository: BookSearchRepository {
 
 struct DummyLibraryRepository: LibraryRepository {
     private let libraries: [Library] = (1...12).map { i in
-        Library(
-            code: String(format: "1110%02d", i),
-            name: "더미\(i): 시립 제\(i)도서관",
-            address: "서울 어딘가 \(i)길 \(i * 10)",
-            coordinate: .init(latitude: 37.55 + Double(i) * 0.005,
-                              longitude: 126.98 + Double(i) * 0.005)
-        )
+        let code = String(format: "1110%02d", i)
+        let name = "더미\(i): 시립 제\(i)도서관"
+        let address = "서울 어딘가 \(i)길 \(i * 10)"
+        let lat: Double = 37.55 + Double(i) * 0.005
+        let lng: Double = 126.98 + Double(i) * 0.005
+        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lng)
+        return Library(code: code, name: name, address: address, coordinate: coordinate)
     }
 
     func holdingLibraries(isbn13: ISBN13, region: RegionCode) async throws -> [Library] {
