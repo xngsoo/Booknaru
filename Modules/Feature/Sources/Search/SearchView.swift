@@ -86,3 +86,20 @@ public struct SearchView: View {
         .scrollDismissesKeyboard(.immediately)
     }
 }
+
+#if DEBUG
+#Preview("검색 결과") {
+    // SearchViewModel은 참조 타입이라, 밖에서 search()를 부르면 SearchView가 관찰하는
+    // 같은 인스턴스가 갱신돼 결과 상태가 렌더된다.
+    let viewModel = PreviewFactory.searchViewModel()
+    viewModel.keyword = "책"
+    return SearchView(viewModel: viewModel,
+                      makeDetailViewModel: { PreviewFactory.detailViewModel($0) })
+        .task { await viewModel.search() }
+}
+
+#Preview("초기 상태") {
+    SearchView(viewModel: PreviewFactory.searchViewModel(),
+               makeDetailViewModel: { PreviewFactory.detailViewModel($0) })
+}
+#endif

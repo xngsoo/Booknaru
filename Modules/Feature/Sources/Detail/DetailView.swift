@@ -105,3 +105,12 @@ private struct HoldingsMap: View {
         .clipShape(RoundedRectangle(cornerRadius: DSRadius.lg))
     }
 }
+
+#if DEBUG
+#Preview {
+    // DetailView는 .task에서 스스로 load()하므로 스텁 데이터로 소장 목록이 채워진다.
+    NavigationStack {
+        DetailView(viewModel: PreviewFactory.detailViewModel())
+    }
+}
+#endif
