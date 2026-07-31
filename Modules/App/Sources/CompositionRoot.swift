@@ -17,6 +17,14 @@ import Feature
 /// Feature는 여기서 조립된 Domain 타입만 받고, Data 구현체는 이 파일 밖으로 새지 않는다.
 @MainActor
 enum CompositionRoot {
+#if DEBUG
+    // 개발계(Debug): 실제 API를 호출하지 않고 더미만 주입한다.
+    // 무료 API의 호출 제한을 개발 중 빌드·실행 반복이 소진하는 걸 막는다.
+    private static let bookSearch: any BookSearchRepository = DummyBookSearchRepository()
+    private static let libraryRepository: any LibraryRepository = DummyLibraryRepository()
+    private static let regionProvider: any RegionProvider = DummyRegionProvider()
+#else
+    // 운영계(Release): 실제 API를 호출한다.
     private static let secrets = AppSecrets()
 
     private static let informClient = URLSessionHTTPClient(
@@ -39,8 +47,10 @@ enum CompositionRoot {
     private static let libraryRepository: any LibraryRepository = CachingLibraryRepository(
         base: DefaultLibraryRepository(client: informClient)
     )
+    private static let regionProvider: any RegionProvider = CoreLocationRegionProvider()
+#endif
+
     private static let findHoldings = FindHoldingsUseCase(repository: libraryRepository)
-    private static let regionProvider = CoreLocationRegionProvider()
 
     static func makeSearchViewModel() -> SearchViewModel {
         SearchViewModel(bookSearch: bookSearch)
