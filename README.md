@@ -84,6 +84,33 @@ tuist generate
 
 `.xcodeproj`는 커밋하지 않는다. `Project.swift`가 유일한 진실의 원천이며 프로젝트 파일은 매번 생성한다.
 
+## 브랜치 전략
+
+`dev`(통합·기본 브랜치)와 `main`(릴리스 전용)의 2트랙으로 나눈다. 기능·수정은 `dev`에서 분기해 `dev`로 모으고, 최종 검증을 마친 뒤에만 `main`으로 올려 배포한다.
+
+```
+feat/* · fix/* · chore/*  ──PR──▶  dev  ──PR──▶  main  ──tag(vX.Y.Z)──▶  TestFlight
+   (짧게 살고 삭제)              (통합·최종테스트)   (릴리스)              (deploy.yml)
+```
+
+| 브랜치 | 역할 | 보호 규칙 |
+|---|---|---|
+| `dev` | 통합·최종 테스트 (기본 브랜치) | `build-test` 통과 + PR 필수 |
+| `main` | 릴리스 전용 | `build-test` 통과 + PR 필수, force-push·삭제 금지 |
+| `feat/*` `fix/*` `chore/*` `docs/*` | 단위 작업 (dev에서 분기) | — |
+
+- **배포는 브랜치가 아니라 태그로 트리거한다.** `main`에서 `vX.Y.Z` 태그를 push하면 [`deploy.yml`](.github/workflows/deploy.yml)이 TestFlight로 배포한다(태그는 `main`에서만 만든다). 파이프라인이 브랜치와 분리돼 있어 전략을 바꿔도 배포 설정은 그대로다.
+- **두 브랜치 모두 CI(`build-test`) 통과와 PR을 머지 조건으로 강제**하므로 깨진 코드가 통합·릴리스 브랜치에 들어가지 못한다.
+
+릴리스 흐름:
+
+```bash
+gh pr create --base main --head dev --title "release: v1.1.0"   # dev → main
+# build-test 통과 → 머지
+git switch main && git pull
+git tag v1.1.0 && git push origin v1.1.0                        # → TestFlight
+```
+
 ## 배포
 
 TestFlight 배포를 fastlane으로 자동화했다. **테스트는 `xcodebuild`, 서명·아카이브·업로드는 fastlane**으로 나눈 하이브리드 구성 — 이미 잘 도는 테스트 CI를 감싸지 않고, fastlane은 그 강점인 코드 서명·배포에만 쓴다.
@@ -161,7 +188,7 @@ TestFlight 배포를 fastlane으로 자동화했다. **테스트는 `xcodebuild`
 - Swift 6 언어 모드 + 모듈별 액터 격리가 의도대로 적용되는지 프로브 코드로 확인
 - `Feature`에서는 컴파일 에러, `Data`에서는 통과 — 이 비대칭이 설정이 걸렸다는 증거
 - PR마다 GitHub Actions에서 빌드·테스트 자동 실행
-- `main` 브랜치는 CI 통과를 머지 조건으로 강제
+- `dev`·`main` 브랜치는 CI 통과와 PR을 머지 조건으로 강제
 - 실기기 스모크 테스트로 실제 API 경로 확인(위치 권한, 검색 → 상세 → 소장 도서관·지도), TestFlight 배포까지 검증
 
 ## 문서
