@@ -49,6 +49,9 @@ struct PreviewLibraryRepository: LibraryRepository {
 
 struct PreviewRegionProvider: RegionProvider {
     func currentRegion() async -> RegionCode { .seoul }
+    func currentCoordinate() async -> CLLocationCoordinate2D? {
+        .init(latitude: 37.566, longitude: 126.978)   // 시청 부근
+    }
 }
 
 @MainActor
