@@ -26,6 +26,9 @@ struct HoldingRow: View {
             Text(holding.library.address)
                 .font(DSFont.meta)
                 .foregroundStyle(DSColor.secondaryText)
+            if let distance = formattedDistance {
+                InfoLabel(distance, systemImage: "location")
+            }
             if let operatingTime = holding.library.operatingTime, operatingTime != "-" {
                 InfoLabel(operatingTime, systemImage: "clock")
             }
@@ -36,5 +39,13 @@ struct HoldingRow: View {
         }
         .dsCard()
         .accessibilityElement(children: .combine)
+    }
+
+    /// 단위(m/km)·자릿수는 usage: .road에 맡긴다. 직접 반올림하면 로케일마다 틀어진다.
+    private var formattedDistance: String? {
+        holding.distance.map {
+            Measurement(value: $0, unit: UnitLength.meters)
+                .formatted(.measurement(width: .abbreviated, usage: .road))
+        }
     }
 }

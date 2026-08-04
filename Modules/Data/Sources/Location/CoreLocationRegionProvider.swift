@@ -15,6 +15,8 @@ import Domain
 /// 권한 거부·측위/지오코딩 실패는 모두 기본 지역(서울)으로 폴백한다.
 public actor CoreLocationRegionProvider: RegionProvider {
     private var cached: RegionCode?
+    private var cachedFix: CLLocation?
+    private var didFix = false      // 측위 실패(nil)도 캐시해야 재시도 폭주를 막는다
 
     public init() {}
 
@@ -25,8 +27,22 @@ public actor CoreLocationRegionProvider: RegionProvider {
         return resolved
     }
 
+    public func currentCoordinate() async -> CLLocationCoordinate2D? {
+        await fix()?.coordinate
+    }
+
+    /// 지역 해석과 거리 정렬이 같은 측위 결과를 나눠 쓴다.
+    /// 액터 재진입으로 중복 측위가 생기지 않도록 호출부는 순차로 부른다.
+    private func fix() async -> CLLocation? {
+        if !didFix {
+            cachedFix = await firstFix()
+            didFix = true
+        }
+        return cachedFix
+    }
+
     private func resolve() async -> RegionCode? {
-        guard let location = await firstFix() else { return nil }
+        guard let location = await fix() else { return nil }
         guard let placemarks = try? await CLGeocoder().reverseGeocodeLocation(location),
               let area = placemarks.first?.administrativeArea else { return nil }
         return RegionCode(administrativeArea: area)

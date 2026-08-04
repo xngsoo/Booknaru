@@ -58,7 +58,9 @@ public final class DetailViewModel {
     }
 
     private func holdings() async throws -> [LibraryHolding] {
+        // 순차 호출. 둘 다 같은 측위 결과를 쓰므로 동시에 부르면 액터 재진입으로 측위가 두 번 돈다.
         let region = await regionProvider.currentRegion()
-        return try await findHoldings(isbn13: book.isbn13, region: region)
+        let origin = await regionProvider.currentCoordinate()
+        return try await findHoldings(isbn13: book.isbn13, region: region, from: origin)
     }
 }

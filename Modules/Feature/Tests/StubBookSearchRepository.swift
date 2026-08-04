@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import CoreLocation
 import Domain
 
 /// 생성자 주입 덕분에 실제 네트워크 없이 ViewModel을 테스트할 수 있다.
@@ -41,7 +42,9 @@ struct StubLibraryRepository: LibraryRepository {
 /// 위치 해석을 대신하는 스텁. 테스트는 항상 고정 지역을 준다.
 struct StubRegionProvider: RegionProvider {
     var region: RegionCode = .seoul
+    var coordinate: CLLocationCoordinate2D?
     func currentRegion() async -> RegionCode { region }
+    func currentCoordinate() async -> CLLocationCoordinate2D? { coordinate }
 }
 
 struct StubError: Error {}
