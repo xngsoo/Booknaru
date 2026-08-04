@@ -66,7 +66,10 @@ public struct DetailView: View {
                 .padding(.vertical, DSSpacing.xl)
         case .failed(let message):
             EmptyStateView(message, systemImage: "exclamationmark.triangle",
-                           tint: DSColor.warning)
+                           tint: DSColor.warning,
+                           actionTitle: "다시 시도") {
+                Task { await viewModel.load() }
+            }
         case .loaded(let holdings) where holdings.isEmpty:
             EmptyStateView("소장 도서관이 없습니다",
                            systemImage: "books.vertical",

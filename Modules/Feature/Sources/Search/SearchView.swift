@@ -62,9 +62,13 @@ public struct SearchView: View {
             resultList(books)
         case .failed(let message):
             Spacer()
+            // 검색어는 그대로 남아 있으므로 버튼 하나로 같은 검색을 다시 태운다.
             EmptyStateView(message,
                            systemImage: "exclamationmark.triangle",
-                           tint: DSColor.warning)
+                           tint: DSColor.warning,
+                           actionTitle: "다시 시도") {
+                Task { await viewModel.search() }
+            }
             Spacer()
         }
     }
