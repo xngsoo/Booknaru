@@ -52,6 +52,24 @@ import Domain
         }
     }
 
+    @Test func 실패_후_재시도하면_같은_검색어로_다시_조회해_복구된다() async {
+        // "다시 시도" 버튼이 부르는 것도 결국 같은 search(). 키워드를 다시 입력받지 않아도
+        // 두 번째 호출이 나가고 상태가 loaded로 회복되는지를 본다.
+        let book = sampleBook
+        let attempts = AttemptCounter()
+        let vm = SearchViewModel(bookSearch: StubBookSearchRepository(onSearch: { _ in
+            if await attempts.next() == 1 { throw StubError() }   // 첫 시도만 실패
+            return [book]
+        }))
+        vm.keyword = "하얼빈"
+
+        await vm.search()
+        await vm.search()   // 재시도
+
+        #expect(vm.state == .loaded([book]))
+        #expect(await attempts.count == 2)
+    }
+
     @Test func 공백_키워드는_검색하지_않고_idle을_유지한다() async {
         // 호출되면 실패시켜, 가드가 실제로 막았음을 상태(idle)로 증명한다
         let vm = SearchViewModel(bookSearch: StubBookSearchRepository(onSearch: { _ in
@@ -83,4 +101,13 @@ import Domain
 private actor KeywordBox {
     private(set) var value: String?
     func set(_ v: String) { value = v }
+}
+
+/// 몇 번째 호출인지 세는 액터 박스. 첫 호출만 실패시키는 스텁에 쓴다.
+private actor AttemptCounter {
+    private(set) var count = 0
+    func next() -> Int {
+        count += 1
+        return count
+    }
 }
